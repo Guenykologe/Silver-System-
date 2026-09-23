@@ -366,6 +366,7 @@
     pointed: (L, W) => `M0 0C${f(W * .7)} ${f(-L * .18)} ${f(W * .45)} ${f(-L * .72)} 0 ${f(-L)}C${f(-W * .45)} ${f(-L * .72)} ${f(-W * .7)} ${f(-L * .18)} 0 0Z`,
     round: (L, W) => `M0 0C${f(W * .75)} ${f(-L * .08)} ${f(W * .72)} ${f(-L * 1.02)} 0 ${f(-L)}C${f(-W * .72)} ${f(-L * 1.02)} ${f(-W * .75)} ${f(-L * .08)} 0 0Z`,
     notched: (L, W) => `M0 0C${f(W * .8)} ${f(-L * .2)} ${f(W * .75)} ${f(-L * .95)} ${f(W * .22)} ${f(-L)}C${f(W * .08)} ${f(-L)} ${f(W * .02)} ${f(-L * .92)} 0 ${f(-L * .86)}C${f(-W * .02)} ${f(-L * .92)} ${f(-W * .08)} ${f(-L)} ${f(-W * .22)} ${f(-L)}C${f(-W * .75)} ${f(-L * .95)} ${f(-W * .8)} ${f(-L * .2)} 0 0Z`,
+    ruffled: (L, W) => `M0 0C${f(W * .8)} ${f(-L * .1)} ${f(W * .78)} ${f(-L * .74)} ${f(W * .46)} ${f(-L * .94)}Q${f(W * .3)} ${f(-L * 1.03)} ${f(W * .15)} ${f(-L * .94)}Q0 ${f(-L * 1.04)} ${f(-W * .15)} ${f(-L * .94)}Q${f(-W * .3)} ${f(-L * 1.03)} ${f(-W * .46)} ${f(-L * .94)}C${f(-W * .78)} ${f(-L * .74)} ${f(-W * .8)} ${f(-L * .1)} 0 0Z`,
     fringed: (L, W) => {
       const pts = [[0, 0], [.22, -.5], [.5, -.86], [.37, -.84], [.3, -1], [.17, -.86], [.07, -.99], [-.05, -.86], [-.16, -.99], [-.27, -.85], [-.37, -.97], [-.44, -.84], [-.5, -.88], [-.22, -.5]];
       return 'M' + pts.map(([x, y]) => `${f(x * W)} ${f(y * L)}`).join('L') + 'Z';
@@ -379,6 +380,18 @@
       el('circle', { cx: f(r * Math.cos(a)), cy: f(r * Math.sin(a)), r: dot, fill: colors[i % colors.length] }, g);
     }
   }
+  function poppyCenter(g, filament, anther, capsule, capsuleEdge, ray) {
+    for (let i = 0; i < 40; i++) {
+      const a = i / 40 * Math.PI * 2 + (i % 2) * .05, r = 26 + (i % 3) * 4;
+      el('line', { x1: f(19 * Math.cos(a)), y1: f(19 * Math.sin(a)), x2: f(r * Math.cos(a)), y2: f(r * Math.sin(a)), stroke: filament, 'stroke-width': 1 }, g);
+      el('circle', { cx: f(r * Math.cos(a)), cy: f(r * Math.sin(a)), r: 2.4, fill: anther }, g);
+    }
+    el('circle', { r: 19, fill: capsule, stroke: capsuleEdge, 'stroke-width': 2 }, g);
+    for (let i = 0; i < 9; i++) {
+      const a = i / 9 * Math.PI * 2;
+      el('line', { x1: 0, y1: 0, x2: f(16 * Math.cos(a)), y2: f(16 * Math.sin(a)), stroke: ray, 'stroke-width': 1.8, 'stroke-linecap': 'round' }, g);
+    }
+  }
   const CENTERS = {
     daisy(g) {
       el('circle', { r: 24, fill: '#e7a51c', stroke: '#c9860e', 'stroke-width': 2 }, g);
@@ -388,17 +401,11 @@
       el('circle', { r: 54, fill: '#4a2c10', stroke: '#6b4119', 'stroke-width': 3 }, g);
       golden(g, 340, 50, 1.55, ['#2a1606', '#6b4119', '#3b220b']);
     },
-    poppy(g) {
-      for (let i = 0; i < 40; i++) {
-        const a = i / 40 * Math.PI * 2 + (i % 2) * .05, r = 26 + (i % 3) * 4;
-        el('line', { x1: f(19 * Math.cos(a)), y1: f(19 * Math.sin(a)), x2: f(r * Math.cos(a)), y2: f(r * Math.sin(a)), stroke: '#1d1a20', 'stroke-width': 1 }, g);
-        el('circle', { cx: f(r * Math.cos(a)), cy: f(r * Math.sin(a)), r: 2.4, fill: '#16131a' }, g);
-      }
-      el('circle', { r: 19, fill: '#7b9669', stroke: '#48603c', 'stroke-width': 2 }, g);
-      for (let i = 0; i < 9; i++) {
-        const a = i / 9 * Math.PI * 2;
-        el('line', { x1: 0, y1: 0, x2: f(16 * Math.cos(a)), y2: f(16 * Math.sin(a)), stroke: '#2f3d2a', 'stroke-width': 1.8, 'stroke-linecap': 'round' }, g);
-      }
+    poppy(g) { poppyCenter(g, '#1d1a20', '#16131a', '#7b9669', '#48603c', '#2f3d2a'); },
+    iceland(g) { poppyCenter(g, '#e2a91f', '#f6d443', '#b9cc8a', '#86995a', '#6e8045'); },
+    peony(g) {
+      el('circle', { r: 15, fill: '#c94d79' }, g);
+      golden(g, 22, 12, 1.9, ['#f4cf55', '#e9b62f']);
     },
     cherry(g) {
       for (let i = 0; i < 20; i++) {
@@ -432,8 +439,10 @@
         { count: [16, 21], L: 88, W: 44, r0: 44, shape: 'pointed', grad: ['#c97c0c', '#eba31a', '#f5c23f'], stroke: '#b86f0a' },
         { count: 'same', offset: .5, L: 80, W: 40, r0: 44, shape: 'pointed', grad: ['#d98c12', '#f4b82a', '#fbd35a'], stroke: '#c47d0e' },
       ] },
-    { id: 'poppy', name: 'Mohn', gen: 'meines Mohns', center: 'poppy',
+    { id: 'poppy', name: 'Klatschmohn', gen: 'meines Klatschmohns', center: 'poppy',
       layers: [{ count: [4, 6], L: 108, W: 110, r0: 0, shape: 'round', grad: ['#1f0a0c', '#cf2a22', '#ee4b37'], stops: [0, .2, 1], stroke: '#a81d18' }] },
+    { id: 'iceland', name: 'Islandmohn', gen: 'meines Islandmohns', center: 'iceland',
+      layers: [{ count: [4, 5], L: 104, W: 114, r0: 0, shape: 'ruffled', grad: ['#e0561a', '#f38a2a', '#fbbd4c'], stops: [0, .45, 1], stroke: '#d0561a' }] },
     { id: 'cherry', name: 'Kirschblüte', gen: 'meiner Kirschblüte', center: 'cherry',
       layers: [{ count: [5, 6], L: 86, W: 80, r0: 4, shape: 'notched', grad: ['#f19ab6', '#fbd0dd', '#fff2f6'], stroke: '#eeb3c6' }] },
     { id: 'corn', name: 'Kornblume', gen: 'meiner Kornblume', center: 'corn',
@@ -443,6 +452,13 @@
         { count: [5, 6], L: 100, W: 92, r0: 4, shape: 'round', grad: ['#8a1535', '#c8305a', '#e45a80'], stroke: '#9c1d40' },
         { count: [5, 6], offset: .5, L: 78, W: 74, r0: 3, shape: 'round', grad: ['#7d1230', '#b82850', '#d94872'], stroke: '#8e1a3b' },
         { count: [4, 5], L: 54, W: 54, r0: 2, shape: 'round', grad: ['#6e0f2a', '#a52047', '#c93a63'], stroke: '#7d1433' },
+      ] },
+    { id: 'peony', name: 'Pfingstrose', gen: 'meiner Pfingstrose', center: 'peony',
+      layers: [
+        { count: [7, 9], L: 106, W: 92, r0: 6, shape: 'ruffled', grad: ['#e27b9d', '#f5b6ca', '#fde4ec'], stroke: '#e79ab3' },
+        { count: [7, 9], offset: .5, L: 90, W: 82, r0: 5, shape: 'ruffled', grad: ['#da6a91', '#f0a2bc', '#fbd5e1'], stroke: '#df86a5' },
+        { count: [6, 8], L: 70, W: 68, r0: 4, shape: 'ruffled', grad: ['#d05a86', '#e98eae', '#f6c2d3'], stroke: '#d6749a' },
+        { count: [5, 7], offset: .5, L: 48, W: 50, r0: 3, shape: 'ruffled', grad: ['#c44b78', '#e07ca1', '#f0aec4'], stroke: '#cc6690' },
       ] },
   ];
 
@@ -599,7 +615,11 @@
     oracleLine.className = 'oracle-line';
     oracleLine.textContent = idleText();
     oracleMeta.textContent = `${currentDef.name} · antippen oder abziehen`;
-    chipsBox.querySelectorAll('.chip').forEach((c) => c.setAttribute('aria-pressed', String(c.dataset.id === currentDef.id)));
+    chipsBox.querySelectorAll('.chip').forEach((c) => {
+      const on = c.dataset.id === currentDef.id;
+      c.setAttribute('aria-pressed', String(on));
+      if (on) c.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+    });
   }
 
   function place(p) {
