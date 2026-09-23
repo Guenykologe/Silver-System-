@@ -1,6 +1,8 @@
 # Blütenzupfer
 
 Blütenblätter zupfen – ganz klassisch: *Er liebt mich … er liebt mich nicht.*
+**Zum ersten Mal dabei?** Die [Schritt-für-Schritt-Anleitung](ANLEITUNG.md) erklärt alles von Anfang an.
+
 Läuft im Browser (auch offline, installierbar als Web-App) und als App für Android und iOS (mit Capacitor).
 
 ## Funktionen
