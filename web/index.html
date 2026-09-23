@@ -108,6 +108,7 @@
     .controls { flex-basis: 100%; }
     input { max-width: none; }
     select { max-width: 52%; }
+    .controls.no-who select { flex: 1 1 auto; max-width: none; }
   }
 
   .stage {
@@ -477,6 +478,13 @@
   }
   if (PHRASES[store.get('phrase')]) phraseSel.value = store.get('phrase');
   whoInput.value = store.get('who') || '';
+  // The name field only makes sense for the "… liebt mich (nicht)" oracles.
+  function syncWhoField() {
+    const show = !!PHRASES[phraseSel.value].who;
+    whoInput.hidden = !show;
+    whoInput.parentElement.classList.toggle('no-who', !show);
+  }
+  syncWhoField();
   soundBtn.setAttribute('aria-pressed', String(fxOn));
 
   const whoName = () => whoInput.value.replace(/\s+/g, ' ').trim();
@@ -883,7 +891,7 @@
     announce(false);
     if (done && !resultBox.hidden) showResult(false);
   }
-  phraseSel.addEventListener('change', () => { store.set('phrase', phraseSel.value); refreshTexts(); });
+  phraseSel.addEventListener('change', () => { store.set('phrase', phraseSel.value); syncWhoField(); refreshTexts(); });
   whoInput.addEventListener('input', () => { store.set('who', whoName()); refreshTexts(); });
   whoInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') whoInput.blur(); });
   soundBtn.addEventListener('click', () => {

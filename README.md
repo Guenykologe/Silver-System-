@@ -7,7 +7,7 @@ Läuft im Browser (auch offline, installierbar als Web-App) und als App für And
 
 - **Zupfen:** Blatt antippen oder mit dem Finger abziehen und werfen. Tastatur: Enter/Leertaste.
 - **6 Blumen:** Gänseblümchen, Sonnenblume, Mohn, Kirschblüte, Kornblume, Rose – jede mit zufälliger Blätterzahl.
-- **Name:** Oben „Wer?“ ausfüllen, dann heißt es „Max liebt mich … Max liebt mich nicht“.
+- **Name:** Bei den „liebt mich (nicht)“-Orakeln oben „Wer?“ ausfüllen, dann heißt es „Max liebt mich … Max liebt mich nicht“. Bei Ja/Nein und „Ich trau mich“ ist das Feld ausgeblendet.
 - **Orakel:** Er/Sie liebt mich (nicht), der alte Reim „von Herzen, mit Schmerzen, ein wenig, gar nicht“, Ja/Nein, Ich trau mich (nicht).
 - **Teilen:** Das Ergebnis als Bild (1080 × 1350) mit Text – in der App über das Teilen-Menü des Handys.
 - **Ton & Vibration:** Zupf-Geräusch, kleine Melodie am Ende, Vibration. Oben mit dem Lautsprecher-Knopf abschaltbar.
