@@ -1,0 +1,25 @@
+{
+  "name": "bluetenzupfer",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Blütenblätter zupfen: Er liebt mich, er liebt mich nicht.",
+  "type": "module",
+  "scripts": {
+    "start": "node scripts/serve.mjs",
+    "build": "node scripts/build.mjs",
+    "android": "npm run build && cap sync android && cap open android",
+    "ios": "npm run build && cap sync ios && cap open ios",
+    "assets": "npx @capacitor/assets generate --android --ios --iconBackgroundColor \"#cfe2e6\" --splashBackgroundColor \"#eef2e2\" --splashBackgroundColorDark \"#0e1526\""
+  },
+  "dependencies": {
+    "@capacitor/core": "^8.5.2",
+    "@capacitor/filesystem": "^8.1.3",
+    "@capacitor/haptics": "^8.0.2",
+    "@capacitor/share": "^8.0.2"
+  },
+  "devDependencies": {
+    "@capacitor/android": "^8.5.2",
+    "@capacitor/cli": "^8.5.2",
+    "@capacitor/ios": "^8.5.2"
+  }
+}

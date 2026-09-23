@@ -4,10 +4,20 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Blütenzupfer</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;600;700&family=Shantell+Sans:ital,wght@0,500;0,700;1,500&display=swap">
+<meta name="description" content="Blütenblätter zupfen: Er liebt mich, er liebt mich nicht.">
+<meta name="theme-color" content="#cfe2e6">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Blütenzupfer">
 <style>
+  /* fonts:local */
+  @font-face { font-family: "Figtree"; src: url("fonts/figtree.woff2") format("woff2"); font-weight: 300 900; font-style: normal; font-display: swap; }
+  @font-face { font-family: "Shantell Sans"; src: url("fonts/shantell-sans.woff2") format("woff2"); font-weight: 300 800; font-style: normal; font-display: swap; }
+  @font-face { font-family: "Shantell Sans"; src: url("fonts/shantell-sans-italic.woff2") format("woff2"); font-weight: 300 800; font-style: italic; font-display: swap; }
+  /* /fonts:local */
+
   :root {
     --sky-top: #cfe2e6;
     --sky-bottom: #eef2e2;
@@ -70,27 +80,41 @@
     -webkit-tap-highlight-color: transparent;
   }
   .app { height: 100%; display: flex; flex-direction: column; }
+  .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
   .bar {
-    display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
-    padding: 12px 16px;
+    display: flex; align-items: center; justify-content: space-between; gap: 10px 12px; flex-wrap: wrap;
+    padding: calc(10px + env(safe-area-inset-top, 0px)) 16px 10px;
     background: var(--sky-top);
   }
-  .brand { margin: 0; font: 700 1.35rem/1 var(--display); letter-spacing: -0.01em; }
+  .brand { margin: 0; font: 700 1.35rem/1 var(--display); letter-spacing: -0.01em; white-space: nowrap; }
   .brand span { color: var(--accent); }
-  .phrase-pick { display: flex; align-items: center; gap: 8px; font-size: 0.8rem; color: var(--muted); }
-  .phrase-pick span { text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600; }
-  select {
+  .controls { display: flex; align-items: center; gap: 8px; flex: 1 1 360px; justify-content: flex-end; min-width: 0; }
+  input, select {
     font: 600 0.95rem var(--body); color: var(--ink);
     background: var(--card); border: 1px solid var(--line); border-radius: 10px;
-    padding: 7px 10px; max-width: 60vw;
+    padding: 8px 10px; min-width: 0; height: 38px;
+  }
+  input { flex: 1 1 120px; max-width: 190px; }
+  input::placeholder { color: var(--muted); font-weight: 500; }
+  select { flex: 0 1 auto; max-width: 230px; }
+  .icon-btn {
+    flex: 0 0 auto; width: 38px; height: 38px; display: grid; place-items: center;
+    background: var(--card); border: 1px solid var(--line); border-radius: 10px; color: var(--ink); cursor: pointer; padding: 0;
+  }
+  .icon-btn svg { width: 20px; height: 20px; }
+  .icon-btn[aria-pressed="true"] .when-off, .icon-btn[aria-pressed="false"] .when-on { display: none; }
+  @media (max-width: 560px) {
+    .controls { flex-basis: 100%; }
+    input { max-width: none; }
+    select { max-width: 52%; }
   }
 
   .stage {
     position: relative; flex: 1; min-height: 0; overflow: hidden;
     background: linear-gradient(var(--sky-top), var(--sky-bottom));
   }
-  #scene { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; user-select: none; }
+  #scene { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; user-select: none; -webkit-user-select: none; }
   #scene:focus-visible { outline: 3px solid var(--focus); outline-offset: -3px; }
   .petal { cursor: grab; }
   .petal:hover > g { filter: brightness(1.07); }
@@ -106,7 +130,7 @@
   }
   .oracle-line {
     margin: 0; font: 700 clamp(1.7rem, 6.5vw, 2.7rem)/1.1 var(--display);
-    text-wrap: balance; color: var(--ink);
+    text-wrap: balance; color: var(--ink); overflow-wrap: anywhere;
   }
   .oracle-line.neg { color: var(--muted); font-style: italic; font-weight: 500; }
   .oracle-line.good { color: var(--accent); }
@@ -126,18 +150,29 @@
   }
   @keyframes rise { from { transform: translate(-50%, 24px); opacity: 0; } to { transform: translate(-50%, 0); opacity: 1; } }
   .result-kicker { margin: 0; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); font-weight: 600; }
-  .result-verdict { margin: 0; font: 700 2rem/1.1 var(--display); color: var(--accent); text-wrap: balance; }
+  .result-verdict { margin: 0; font: 700 2rem/1.1 var(--display); color: var(--accent); text-wrap: balance; overflow-wrap: anywhere; }
   .result-verdict.neg { color: var(--ink); font-style: italic; font-weight: 500; }
   .result-note { margin: 0 0 8px; color: var(--muted); max-width: 30ch; text-wrap: pretty; }
+  .result-actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
 
   .btn {
+    display: inline-flex; align-items: center; gap: 8px;
     font: 700 0.95rem var(--body); color: var(--ink);
     background: var(--card); border: 1px solid var(--line); border-radius: 999px;
     padding: 10px 18px; cursor: pointer; white-space: nowrap;
   }
+  .btn svg { width: 18px; height: 18px; }
   .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
   .btn:hover { filter: brightness(1.04); }
-  button:focus-visible, select:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+  button:focus-visible, select:focus-visible, input:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+
+  .toast {
+    position: absolute; z-index: 4; left: 50%; bottom: 16px; transform: translateX(-50%);
+    width: max-content; max-width: calc(100% - 32px);
+    background: var(--ink); color: var(--sky-bottom); border-radius: 14px;
+    padding: 10px 16px; font-weight: 600; text-align: center; user-select: text; -webkit-user-select: text;
+    box-shadow: var(--shadow);
+  }
 
   .picker {
     display: flex; align-items: center; gap: 12px;
@@ -167,9 +202,6 @@
     100% { transform: translate(var(--dx), -260px) scale(1.15) rotate(var(--rot)); opacity: 0; }
   }
 
-  @media (max-width: 420px) {
-    .phrase-pick span { display: none; }
-  }
   @media (prefers-reduced-motion: reduce) {
     .oracle-line.pop, .result { animation: none; }
   }
@@ -179,10 +211,19 @@
 <div class="app">
   <header class="bar">
     <h1 class="brand">Blüten<span>zupfer</span></h1>
-    <label class="phrase-pick" for="phraseSet">
-      <span>Orakel</span>
+    <div class="controls">
+      <label class="sr-only" for="who">Um wen geht es?</label>
+      <input id="who" type="text" maxlength="24" placeholder="Wer? (Name)" autocomplete="off" autocapitalize="words" spellcheck="false" enterkeyhint="done">
+      <label class="sr-only" for="phraseSet">Orakel</label>
       <select id="phraseSet"></select>
-    </label>
+      <button type="button" id="soundBtn" class="icon-btn" aria-pressed="true" aria-label="Ton und Vibration" title="Ton und Vibration">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor" stroke-width="1.5"/>
+          <g class="when-on"><path d="M16.5 8.5a5 5 0 0 1 0 7"/><path d="M19 6a8.5 8.5 0 0 1 0 12"/></g>
+          <g class="when-off"><path d="M17 9.5l5 5M22 9.5l-5 5"/></g>
+        </svg>
+      </button>
+    </div>
   </header>
 
   <main class="stage" id="stage">
@@ -201,8 +242,15 @@
       <p class="result-kicker">Das letzte Blatt sagt</p>
       <p class="result-verdict" id="resultVerdict"></p>
       <p class="result-note" id="resultNote"></p>
-      <button type="button" id="againBtn" class="btn primary">Nächste Blume</button>
+      <div class="result-actions">
+        <button type="button" id="shareBtn" class="btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V3M7 8l5-5 5 5"/><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/></svg>
+          Teilen
+        </button>
+        <button type="button" id="againBtn" class="btn primary">Nächste Blume</button>
+      </div>
     </div>
+    <div class="toast" id="toast" role="status" hidden></div>
   </main>
 
   <nav class="picker" aria-label="Blume wählen">
@@ -231,6 +279,85 @@
     get(k) { try { return localStorage.getItem('bluetenzupfer.' + k); } catch (e) { return null; } },
     set(k, v) { try { localStorage.setItem('bluetenzupfer.' + k, v); } catch (e) {} },
   };
+
+  // ---------- Native app (Capacitor) or plain browser ----------
+  let native = null;
+  const C0 = window.Capacitor;
+  const isNative = !!(C0 && typeof C0.isNativePlatform === 'function' && C0.isNativePlatform());
+  if (isNative) {
+    const s = document.createElement('script');
+    s.src = 'vendor/capacitor.js';
+    s.onload = () => {
+      const reg = window.Capacitor.registerPlugin;
+      native = { Share: reg('Share'), Haptics: reg('Haptics'), Filesystem: reg('Filesystem') };
+    };
+    document.head.appendChild(s);
+  } else if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {
+    window.addEventListener('load', () => { navigator.serviceWorker.register('sw.js').catch(() => {}); });
+  }
+
+  // ---------- Sound (Web Audio, no files) and vibration ----------
+  let fxOn = store.get('fx') !== 'off';
+  const fx = (() => {
+    let ctx = null, noise = null;
+    function unlock() {
+      if (!fxOn) return;
+      try {
+        if (!ctx) {
+          const AC = window.AudioContext || window.webkitAudioContext;
+          if (!AC) return;
+          ctx = new AC();
+          noise = ctx.createBuffer(1, Math.floor(ctx.sampleRate * 0.1), ctx.sampleRate);
+          const d = noise.getChannelData(0);
+          for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+        }
+        if (ctx.state === 'suspended') ctx.resume();
+      } catch (e) {}
+    }
+    function env(g, t, peak, attack, decay) {
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.exponentialRampToValueAtTime(peak, t + attack);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + attack + decay);
+    }
+    function pluck() {
+      if (!fxOn || !ctx) return;
+      const t = ctx.currentTime;
+      const src = ctx.createBufferSource(); src.buffer = noise;
+      const bp = ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = rand(2200, 3600); bp.Q.value = 1.2;
+      const g = ctx.createGain(); env(g, t, 0.3, 0.004, 0.07);
+      src.connect(bp).connect(g).connect(ctx.destination);
+      src.start(t); src.stop(t + 0.09);
+      const o = ctx.createOscillator(); o.type = 'sine';
+      const f0 = rand(700, 950);
+      o.frequency.setValueAtTime(f0, t); o.frequency.exponentialRampToValueAtTime(f0 * 0.55, t + 0.06);
+      const g2 = ctx.createGain(); env(g2, t, 0.1, 0.005, 0.09);
+      o.connect(g2).connect(ctx.destination);
+      o.start(t); o.stop(t + 0.11);
+    }
+    function chime(good) {
+      if (!fxOn || !ctx) return;
+      const notes = good === 1 ? [523.25, 659.25, 783.99, 1046.5] : good === 0 ? [392, 329.63] : [440, 493.88, 440];
+      notes.forEach((hz, i) => {
+        const t = ctx.currentTime + i * 0.11;
+        const o = ctx.createOscillator(); o.type = 'triangle'; o.frequency.value = hz;
+        const g = ctx.createGain(); env(g, t, 0.12, 0.01, 0.5);
+        o.connect(g).connect(ctx.destination);
+        o.start(t); o.stop(t + 0.55);
+      });
+    }
+    function buzz(kind) {
+      if (!fxOn) return;
+      if (native) {
+        const p = kind === 'pluck'
+          ? native.Haptics.impact({ style: 'LIGHT' })
+          : native.Haptics.notification({ type: kind === 'good' ? 'SUCCESS' : 'WARNING' });
+        if (p && p.catch) p.catch(() => {});
+        return;
+      }
+      try { if (navigator.vibrate) navigator.vibrate(kind === 'pluck' ? 8 : kind === 'good' ? [20, 60, 20, 60, 40] : 40); } catch (e) {}
+    }
+    return { unlock, pluck, chime, buzz };
+  })();
 
   // ---------- Petal shapes: base at (0,0), tip at (0,-L) ----------
   const SHAPES = {
@@ -297,20 +424,20 @@
 
   // ---------- Flowers ----------
   const FLOWERS = [
-    { id: 'daisy', name: 'Gänseblümchen', center: 'daisy',
+    { id: 'daisy', name: 'Gänseblümchen', gen: 'meines Gänseblümchens', center: 'daisy',
       layers: [{ count: [21, 34], L: 92, W: 22, r0: 16, shape: 'daisy', grad: ['#efe8dc', '#ffffff', '#f3b9c8'], stroke: '#e3d8c8' }] },
-    { id: 'sun', name: 'Sonnenblume', center: 'sun',
+    { id: 'sun', name: 'Sonnenblume', gen: 'meiner Sonnenblume', center: 'sun',
       layers: [
         { count: [16, 21], L: 88, W: 44, r0: 44, shape: 'pointed', grad: ['#c97c0c', '#eba31a', '#f5c23f'], stroke: '#b86f0a' },
         { count: 'same', offset: .5, L: 80, W: 40, r0: 44, shape: 'pointed', grad: ['#d98c12', '#f4b82a', '#fbd35a'], stroke: '#c47d0e' },
       ] },
-    { id: 'poppy', name: 'Mohn', center: 'poppy',
+    { id: 'poppy', name: 'Mohn', gen: 'meines Mohns', center: 'poppy',
       layers: [{ count: [4, 6], L: 108, W: 110, r0: 0, shape: 'round', grad: ['#1f0a0c', '#cf2a22', '#ee4b37'], stops: [0, .2, 1], stroke: '#a81d18' }] },
-    { id: 'cherry', name: 'Kirschblüte', center: 'cherry',
+    { id: 'cherry', name: 'Kirschblüte', gen: 'meiner Kirschblüte', center: 'cherry',
       layers: [{ count: [5, 6], L: 86, W: 80, r0: 4, shape: 'notched', grad: ['#f19ab6', '#fbd0dd', '#fff2f6'], stroke: '#eeb3c6' }] },
-    { id: 'corn', name: 'Kornblume', center: 'corn',
+    { id: 'corn', name: 'Kornblume', gen: 'meiner Kornblume', center: 'corn',
       layers: [{ count: [8, 12], L: 96, W: 58, r0: 16, shape: 'fringed', grad: ['#27479e', '#4674d6', '#8aabf4'], stroke: '#2d4fa6' }] },
-    { id: 'rose', name: 'Rose', center: 'rose',
+    { id: 'rose', name: 'Rose', gen: 'meiner Rose', center: 'rose',
       layers: [
         { count: [5, 6], L: 100, W: 92, r0: 4, shape: 'round', grad: ['#8a1535', '#c8305a', '#e45a80'], stroke: '#9c1d40' },
         { count: [5, 6], offset: .5, L: 78, W: 74, r0: 3, shape: 'round', grad: ['#7d1230', '#b82850', '#d94872'], stroke: '#8e1a3b' },
@@ -318,13 +445,13 @@
       ] },
   ];
 
-  // ---------- Oracle phrases ----------
+  // ---------- Oracle phrases ({wer} = entered name or the pronoun) ----------
   const PHRASES = {
-    er: { label: 'Er liebt mich … nicht', lines: [['Er liebt mich', 1], ['Er liebt mich nicht', 0]] },
-    sie: { label: 'Sie liebt mich … nicht', lines: [['Sie liebt mich', 1], ['Sie liebt mich nicht', 0]] },
-    klassisch: { label: 'Von Herzen, mit Schmerzen …', lines: [['Er liebt mich', 1], ['von Herzen', 1], ['mit Schmerzen', .5], ['ein wenig', .5], ['gar nicht', 0]] },
+    er: { label: 'Er liebt mich (nicht)', who: 'Er', lines: [['{wer} liebt mich', 1], ['{wer} liebt mich nicht', 0]] },
+    sie: { label: 'Sie liebt mich (nicht)', who: 'Sie', lines: [['{wer} liebt mich', 1], ['{wer} liebt mich nicht', 0]] },
+    klassisch: { label: 'Von Herzen, mit Schmerzen', who: 'Er', lines: [['{wer} liebt mich', 1], ['von Herzen', 1], ['mit Schmerzen', .5], ['ein wenig', .5], ['gar nicht', 0]] },
     jn: { label: 'Ja / Nein', lines: [['Ja', 1], ['Nein', 0]] },
-    trau: { label: 'Ich trau mich … nicht', lines: [['Ich trau mich', 1], ['Ich trau mich nicht', 0]] },
+    trau: { label: 'Ich trau mich (nicht)', lines: [['Ich trau mich', 1], ['Ich trau mich nicht', 0]] },
   };
 
   // ---------- DOM ----------
@@ -332,7 +459,8 @@
   const groundLayer = $('groundLayer'), plantLayer = $('plantLayer'), fallenLayer = $('fallenLayer'), flyingLayer = $('flyingLayer');
   const oracleLine = $('oracleLine'), oracleMeta = $('oracleMeta');
   const resultBox = $('result'), resultVerdict = $('resultVerdict'), resultNote = $('resultNote');
-  const phraseSel = $('phraseSet'), chipsBox = $('chips'), heartsBox = $('hearts');
+  const phraseSel = $('phraseSet'), whoInput = $('who'), soundBtn = $('soundBtn');
+  const chipsBox = $('chips'), heartsBox = $('hearts'), toastBox = $('toast');
 
   // gradients
   const defs = $('gradients');
@@ -348,12 +476,22 @@
     phraseSel.appendChild(o);
   }
   if (PHRASES[store.get('phrase')]) phraseSel.value = store.get('phrase');
+  whoInput.value = store.get('who') || '';
+  soundBtn.setAttribute('aria-pressed', String(fxOn));
+
+  const whoName = () => whoInput.value.replace(/\s+/g, ' ').trim();
+  function fill(text) {
+    const set = PHRASES[phraseSel.value];
+    return text.replace('{wer}', whoName() || set.who || '');
+  }
+  const punct = (good) => (good === 1 ? '!' : good === 0 ? '.' : ' …');
 
   // ---------- Building a flower head ----------
   function buildHead(def, fixed) {
     const g = el('g', { class: 'head' });
     const petals = [];
-    let prevCount = 0, start = fixed ? -90 : rand(0, 360);
+    let prevCount = 0;
+    const start = fixed ? -90 : rand(0, 360);
     def.layers.forEach((ly, li) => {
       const n = ly.count === 'same' ? prevCount
         : fixed ? Math.round((ly.count[0] + ly.count[1]) / 2) : randInt(ly.count[0], ly.count[1]);
@@ -396,7 +534,7 @@
 
   function layout() {
     const nw = stage.clientWidth, nh = stage.clientHeight;
-    if (!nw || !nh) return;
+    if (!nw || !nh || (nw === W && nh === H)) return;
     const oldW = W, oldGround = groundY;
     W = nw; H = nh;
     svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
@@ -435,6 +573,11 @@
     if (oldW) fallen.forEach((p) => { p.x *= W / oldW; p.y += groundY - oldGround; place(p); });
   }
 
+  function idleText() {
+    const set = PHRASES[phraseSel.value], name = whoName();
+    return name && set.who ? `Liebt ${name} mich?` : 'Zupf ein Blütenblatt';
+  }
+
   function newFlower(def) {
     currentDef = def || currentDef;
     store.set('flower', currentDef.id);
@@ -442,11 +585,11 @@
     const built = buildHead(currentDef, false);
     head = built.g; petals = built.petals;
     plantLayer.appendChild(head);
-    total = petals.length; plucked = 0; done = false;
+    total = petals.length; plucked = 0; done = false; sharePrep = null;
     grow = reduceMotion ? 1 : 0; growT = 0;
     resultBox.hidden = true;
     oracleLine.className = 'oracle-line';
-    oracleLine.textContent = 'Zupf ein Blütenblatt';
+    oracleLine.textContent = idleText();
     oracleMeta.textContent = `${currentDef.name} · antippen oder abziehen`;
     chipsBox.querySelectorAll('.chip').forEach((c) => c.setAttribute('aria-pressed', String(c.dataset.id === currentDef.id)));
   }
@@ -485,7 +628,7 @@
     place(p);
     flying.push(p);
     wob.v += (Math.random() < .5 ? -1 : 1) * rand(25, 45);
-    try { if (navigator.vibrate) navigator.vibrate(8); } catch (e) {}
+    fx.pluck(); fx.buzz('pluck');
 
     plucked++;
     announce(true);
@@ -495,33 +638,40 @@
 
   function currentLine() {
     const lines = PHRASES[phraseSel.value].lines;
-    return lines[(plucked - 1) % lines.length];
+    return lines[Math.max(0, plucked - 1) % lines.length];
   }
 
   function announce(animate) {
-    if (!plucked) return;
+    if (!plucked) { oracleLine.textContent = idleText(); return; }
     const [text, good] = currentLine();
-    oracleLine.textContent = text;
+    oracleLine.textContent = fill(text);
     oracleLine.className = 'oracle-line' + (good === 0 ? ' neg' : good === 1 ? ' good' : '');
     if (animate && !reduceMotion) { void oracleLine.offsetWidth; oracleLine.classList.add('pop'); }
     oracleMeta.textContent = `${plucked}. Blatt`;
   }
 
+  function showResult(celebrate) {
+    const [text, good] = currentLine();
+    resultVerdict.textContent = fill(text) + punct(good);
+    resultVerdict.className = 'result-verdict' + (good === 0 ? ' neg' : '');
+    resultNote.textContent = good === 1
+      ? `${total} Blätter, und das letzte hat entschieden.`
+      : good === 0
+        ? `Nur ${total} Blätter. Auf der Wiese wachsen noch mehr.`
+        : `${total} Blätter – eindeutig ist anders.`;
+    resultBox.hidden = false;
+    prepareShare();
+    if (celebrate) {
+      fx.chime(good);
+      fx.buzz(good === 1 ? 'good' : 'bad');
+      if (good === 1) hearts();
+    }
+  }
+
   function finish() {
     done = true;
-    setTimeout(() => {
-      if (!done) return;
-      const [text, good] = currentLine();
-      resultVerdict.textContent = text + (good === 1 ? '!' : good === 0 ? '.' : ' …');
-      resultVerdict.className = 'result-verdict' + (good === 0 ? ' neg' : '');
-      resultNote.textContent = good === 1
-        ? `${total} Blätter, und das letzte hat entschieden.`
-        : good === 0
-          ? `Nur ${total} Blätter. Auf der Wiese wachsen noch mehr.`
-          : `${total} Blätter – eindeutig ist anders.`;
-      resultBox.hidden = false;
-      if (good === 1) hearts();
-    }, 650);
+    const flower = head;
+    setTimeout(() => { if (done && head === flower) showResult(true); }, 650);
   }
 
   function hearts() {
@@ -540,6 +690,138 @@
     }
   }
 
+  let toastTimer = 0;
+  function toast(msg, ms) {
+    toastBox.textContent = msg;
+    toastBox.hidden = false;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => { toastBox.hidden = true; }, ms || 2600);
+  }
+
+  // ---------- Sharing ----------
+  let sharePrep = null;
+  function shareText() {
+    const [text, good] = currentLine();
+    return `„${fill(text)}${punct(good)}“ – sagt das letzte von ${total} Blättern ${currentDef.gen}. 🌼 #Blütenzupfer`;
+  }
+  function flowerImage(def, size) {
+    const g = buildHead(def, true).g;
+    const src = `<svg xmlns="${NS}" viewBox="-145 -145 290 290" width="${size}" height="${size}"><defs>${defs.innerHTML}</defs>${new XMLSerializer().serializeToString(g)}</svg>`;
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => resolve(img);
+      img.onerror = reject;
+      img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(src);
+    });
+  }
+  async function renderShareImage(verdict, good, meta, def) {
+    const c = document.createElement('canvas');
+    c.width = 1080; c.height = 1350;
+    const x = c.getContext('2d');
+    const sky = x.createLinearGradient(0, 0, 0, 1350);
+    sky.addColorStop(0, '#cfe2e6'); sky.addColorStop(1, '#eef2e2');
+    x.fillStyle = sky; x.fillRect(0, 0, 1080, 1350);
+
+    // stem and leaves
+    x.strokeStyle = '#4d7a28'; x.lineWidth = 20; x.lineCap = 'round';
+    x.beginPath(); x.moveTo(540, 1150); x.bezierCurveTo(515, 1040, 562, 880, 540, 650); x.stroke();
+    x.fillStyle = '#5f9432';
+    [[536, 1060, 170, 1], [545, 940, 150, -1]].forEach(([lx, ly, L, dir]) => {
+      x.save(); x.translate(lx, ly); x.scale(dir, 1);
+      x.beginPath(); x.moveTo(0, 0);
+      x.bezierCurveTo(L * .3, -L * .38, L * .8, -L * .38, L, -L * .12);
+      x.bezierCurveTo(L * .7, L * .14, L * .3, L * .14, 0, 0);
+      x.fill(); x.restore();
+    });
+
+    // meadow
+    [['#5f8a2f', 1140, 34, 40], ['#7ea846', 1150, 22, 30]].forEach(([col, base, step, hMax]) => {
+      x.fillStyle = col; x.beginPath();
+      for (let gx = -10; gx < 1090; gx += step * 0.6) {
+        const h = rand(hMax * .5, hMax * 1.3), lean = rand(-10, 10);
+        x.moveTo(gx - 8, base); x.lineTo(gx + lean, base - h); x.lineTo(gx + 8, base);
+      }
+      x.fill();
+    });
+    x.fillStyle = '#7ea846'; x.fillRect(0, 1148, 1080, 202);
+
+    // flower
+    const img = await flowerImage(def, 600);
+    x.drawImage(img, 240, 350, 600, 600);
+
+    // text
+    try { await Promise.all(['700 90px "Shantell Sans"', 'italic 500 90px "Shantell Sans"', '600 36px Figtree'].map((ff) => document.fonts.load(ff))); } catch (e) {}
+    x.textAlign = 'center'; x.textBaseline = 'alphabetic';
+    x.fillStyle = '#5d6950'; x.font = '600 34px Figtree, sans-serif';
+    x.fillText('DAS LETZTE BLATT SAGT', 540, 130);
+
+    const style = good === 0 ? 'italic 500' : '700';
+    let size = 96, lines;
+    for (; size >= 54; size -= 6) {
+      x.font = `${style} ${size}px "Shantell Sans", sans-serif`;
+      lines = [];
+      let lineTxt = '';
+      verdict.split(' ').forEach((word) => {
+        const test = lineTxt ? lineTxt + ' ' + word : word;
+        if (x.measureText(test).width > 960 && lineTxt) { lines.push(lineTxt); lineTxt = word; } else lineTxt = test;
+      });
+      lines.push(lineTxt);
+      if (lines.length <= 2 && lines.every((l) => x.measureText(l).width <= 1000)) break;
+    }
+    x.fillStyle = good === 0 ? '#27301f' : '#c23b5a';
+    lines.forEach((l, i) => x.fillText(l, 540, 230 + i * size * 1.05));
+
+    x.fillStyle = '#ffffff';
+    x.font = '600 38px Figtree, sans-serif';
+    x.fillText(meta, 540, 1235);
+    x.font = '700 46px "Shantell Sans", sans-serif';
+    x.fillText('Blütenzupfer', 540, 1302);
+
+    const dataUrl = c.toDataURL('image/png');
+    const blob = await new Promise((res) => c.toBlob(res, 'image/png'));
+    return { blob, base64: dataUrl.split(',')[1] };
+  }
+  function prepareShare() {
+    const [text, good] = currentLine();
+    sharePrep = renderShareImage(fill(text) + punct(good), good, `${total} Blätter · ${currentDef.name}`, currentDef).catch(() => null);
+  }
+  async function share() {
+    const text = shareText(), title = 'Blütenzupfer';
+    if (!sharePrep) prepareShare();
+
+    if (native) {
+      try {
+        const img = await sharePrep;
+        const opts = { title, text, dialogTitle: 'Ergebnis teilen' };
+        if (img) {
+          const file = await native.Filesystem.writeFile({ path: 'bluetenzupfer.png', data: img.base64, directory: 'CACHE' });
+          opts.files = [file.uri];
+        }
+        await native.Share.share(opts);
+      } catch (e) { /* closed without sharing */ }
+      return;
+    }
+
+    let canFiles = false;
+    try { canFiles = !!(navigator.canShare && navigator.canShare({ files: [new File([new Blob()], 'x.png', { type: 'image/png' })] })); } catch (e) {}
+    if (canFiles) {
+      const img = await sharePrep;
+      if (img) {
+        try { await navigator.share({ title, text, files: [new File([img.blob], 'bluetenzupfer.png', { type: 'image/png' })] }); } catch (e) {}
+        return;
+      }
+    }
+    if (navigator.share) {
+      try { await navigator.share({ title, text }); return; } catch (e) { if (e && e.name === 'AbortError') return; }
+    }
+    try {
+      await navigator.clipboard.writeText(text);
+      toast('Text kopiert – jetzt in einen Chat einfügen.');
+    } catch (e) {
+      toast(text, 8000);
+    }
+  }
+
   // ---------- Pointer input ----------
   let pending = null, dragP = null;
   function toScene(e) {
@@ -547,6 +829,7 @@
     return { x: (e.clientX - r.left) * W / r.width, y: (e.clientY - r.top) * H / r.height, t: e.timeStamp };
   }
   svg.addEventListener('pointerdown', (e) => {
+    fx.unlock();
     const pg = e.target.closest && e.target.closest('.petal');
     if (!pg || !petals.includes(pg) || pending) return;
     e.preventDefault();
@@ -591,17 +874,28 @@
   svg.addEventListener('keydown', (e) => {
     if (e.key !== 'Enter' && e.key !== ' ') return;
     e.preventDefault();
+    fx.unlock();
     if (done) { newFlower(); return; }
     if (petals.length) pluck(petals[Math.floor(Math.random() * petals.length)], false);
   });
 
-  phraseSel.addEventListener('change', () => {
-    store.set('phrase', phraseSel.value);
+  function refreshTexts() {
     announce(false);
-    if (done && !resultBox.hidden) { resultBox.hidden = true; finish(); }
+    if (done && !resultBox.hidden) showResult(false);
+  }
+  phraseSel.addEventListener('change', () => { store.set('phrase', phraseSel.value); refreshTexts(); });
+  whoInput.addEventListener('input', () => { store.set('who', whoName()); refreshTexts(); });
+  whoInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') whoInput.blur(); });
+  soundBtn.addEventListener('click', () => {
+    fxOn = !fxOn;
+    store.set('fx', fxOn ? 'on' : 'off');
+    soundBtn.setAttribute('aria-pressed', String(fxOn));
+    if (fxOn) { fx.unlock(); fx.pluck(); fx.buzz('pluck'); }
+    toast(fxOn ? 'Ton und Vibration an' : 'Ton und Vibration aus', 1400);
   });
   $('newBtn').addEventListener('click', () => newFlower());
   $('againBtn').addEventListener('click', () => newFlower());
+  $('shareBtn').addEventListener('click', share);
 
   // ---------- Animation loop ----------
   const G = 600, AIR = 2.4;
