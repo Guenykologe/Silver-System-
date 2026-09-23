@@ -1,0 +1,654 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Blütenzupfer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;600;700&family=Shantell+Sans:ital,wght@0,500;0,700;1,500&display=swap">
+<style>
+  :root {
+    --sky-top: #cfe2e6;
+    --sky-bottom: #eef2e2;
+    --ink: #27301f;
+    --muted: #5d6950;
+    --grass: #7ea846;
+    --grass-back: #5f8a2f;
+    --stem: #4d7a28;
+    --leaf: #5f9432;
+    --card: #fbfcf5;
+    --line: #d3dbc3;
+    --accent: #c23b5a;
+    --focus: #2f6fb0;
+    --shadow: 0 10px 30px rgba(40, 55, 20, 0.18);
+    --display: "Shantell Sans", "Comic Neue", "Segoe Print", system-ui, sans-serif;
+    --body: "Figtree", system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --sky-top: #0e1526;
+      --sky-bottom: #1b2629;
+      --ink: #ecefdf;
+      --muted: #a5b096;
+      --grass: #35532a;
+      --grass-back: #243b1c;
+      --stem: #447028;
+      --leaf: #4a7b2c;
+      --card: #1a2220;
+      --line: #34412f;
+      --accent: #f07a94;
+      --focus: #8cbcf0;
+      --shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --sky-top: #0e1526;
+    --sky-bottom: #1b2629;
+    --ink: #ecefdf;
+    --muted: #a5b096;
+    --grass: #35532a;
+    --grass-back: #243b1c;
+    --stem: #447028;
+    --leaf: #4a7b2c;
+    --card: #1a2220;
+    --line: #34412f;
+    --accent: #f07a94;
+    --focus: #8cbcf0;
+    --shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+  }
+
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    background: var(--sky-bottom);
+    color: var(--ink);
+    font: 15px/1.45 var(--body);
+    -webkit-tap-highlight-color: transparent;
+  }
+  .app { height: 100%; display: flex; flex-direction: column; }
+
+  .bar {
+    display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+    padding: 12px 16px;
+    background: var(--sky-top);
+  }
+  .brand { margin: 0; font: 700 1.35rem/1 var(--display); letter-spacing: -0.01em; }
+  .brand span { color: var(--accent); }
+  .phrase-pick { display: flex; align-items: center; gap: 8px; font-size: 0.8rem; color: var(--muted); }
+  .phrase-pick span { text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600; }
+  select {
+    font: 600 0.95rem var(--body); color: var(--ink);
+    background: var(--card); border: 1px solid var(--line); border-radius: 10px;
+    padding: 7px 10px; max-width: 60vw;
+  }
+
+  .stage {
+    position: relative; flex: 1; min-height: 0; overflow: hidden;
+    background: linear-gradient(var(--sky-top), var(--sky-bottom));
+  }
+  #scene { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; user-select: none; }
+  #scene:focus-visible { outline: 3px solid var(--focus); outline-offset: -3px; }
+  .petal { cursor: grab; }
+  .petal:hover > g { filter: brightness(1.07); }
+  .dragging, .dragging .petal { cursor: grabbing; }
+  .grass { fill: var(--grass); }
+  .grass-back { fill: var(--grass-back); }
+  .stem { stroke: var(--stem); fill: none; stroke-linecap: round; }
+  .leaf { fill: var(--leaf); }
+
+  .oracle {
+    position: absolute; top: 14px; left: 16px; right: 16px; z-index: 2;
+    text-align: center; pointer-events: none;
+  }
+  .oracle-line {
+    margin: 0; font: 700 clamp(1.7rem, 6.5vw, 2.7rem)/1.1 var(--display);
+    text-wrap: balance; color: var(--ink);
+  }
+  .oracle-line.neg { color: var(--muted); font-style: italic; font-weight: 500; }
+  .oracle-line.good { color: var(--accent); }
+  .oracle-line.pop { animation: pop 0.35s ease-out; }
+  .oracle-meta { margin: 4px 0 0; font-size: 0.85rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+  @keyframes pop { 0% { transform: scale(0.82); opacity: 0.3; } 70% { transform: scale(1.06); } 100% { transform: scale(1); opacity: 1; } }
+
+  .result {
+    position: absolute; z-index: 3; left: 50%; bottom: 18%;
+    transform: translateX(-50%);
+    width: min(360px, calc(100% - 32px));
+    background: var(--card); border: 1px solid var(--line); border-radius: 22px;
+    box-shadow: var(--shadow);
+    padding: 20px 22px; text-align: center;
+    display: grid; gap: 6px; justify-items: center;
+    animation: rise 0.45s cubic-bezier(.2,.9,.3,1.2);
+  }
+  @keyframes rise { from { transform: translate(-50%, 24px); opacity: 0; } to { transform: translate(-50%, 0); opacity: 1; } }
+  .result-kicker { margin: 0; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); font-weight: 600; }
+  .result-verdict { margin: 0; font: 700 2rem/1.1 var(--display); color: var(--accent); text-wrap: balance; }
+  .result-verdict.neg { color: var(--ink); font-style: italic; font-weight: 500; }
+  .result-note { margin: 0 0 8px; color: var(--muted); max-width: 30ch; text-wrap: pretty; }
+
+  .btn {
+    font: 700 0.95rem var(--body); color: var(--ink);
+    background: var(--card); border: 1px solid var(--line); border-radius: 999px;
+    padding: 10px 18px; cursor: pointer; white-space: nowrap;
+  }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .btn:hover { filter: brightness(1.04); }
+  button:focus-visible, select:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+
+  .picker {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 16px calc(12px + env(safe-area-inset-bottom, 0px));
+    background: var(--grass-back);
+  }
+  .chips { display: flex; gap: 8px; overflow-x: auto; flex: 1; min-width: 0; padding-block: 2px; scrollbar-width: none; }
+  .chips::-webkit-scrollbar { display: none; }
+  .chip {
+    flex: 0 0 auto; display: grid; justify-items: center; gap: 2px;
+    min-width: 72px; padding: 6px 8px 5px;
+    background: transparent; border: 2px solid transparent; border-radius: 16px;
+    color: #eef3df; font: 600 0.7rem/1.1 var(--body); cursor: pointer;
+  }
+  .chip svg { width: 44px; height: 44px; display: block; }
+  .chip[aria-pressed="true"] { background: rgba(255, 255, 255, 0.16); border-color: rgba(255, 255, 255, 0.55); }
+  .chip:hover { background: rgba(255, 255, 255, 0.1); }
+
+  .hearts { position: absolute; inset: 0; pointer-events: none; overflow: hidden; z-index: 2; }
+  .heart {
+    position: absolute; color: var(--accent); font-size: 22px; line-height: 1;
+    animation: float 2.6s ease-out forwards;
+  }
+  @keyframes float {
+    0% { transform: translate(0, 0) scale(0.4); opacity: 0; }
+    15% { opacity: 1; }
+    100% { transform: translate(var(--dx), -260px) scale(1.15) rotate(var(--rot)); opacity: 0; }
+  }
+
+  @media (max-width: 420px) {
+    .phrase-pick span { display: none; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .oracle-line.pop, .result { animation: none; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="bar">
+    <h1 class="brand">Blüten<span>zupfer</span></h1>
+    <label class="phrase-pick" for="phraseSet">
+      <span>Orakel</span>
+      <select id="phraseSet"></select>
+    </label>
+  </header>
+
+  <main class="stage" id="stage">
+    <div class="oracle" aria-live="polite">
+      <p class="oracle-line" id="oracleLine">Zupf ein Blütenblatt</p>
+      <p class="oracle-meta" id="oracleMeta">Antippen oder mit dem Finger abziehen</p>
+    </div>
+    <svg id="scene" tabindex="0" role="application" aria-label="Blume – Enter oder Leertaste zupft ein Blütenblatt">
+      <g id="groundLayer"></g>
+      <g id="plantLayer"></g>
+      <g id="fallenLayer"></g>
+      <g id="flyingLayer"></g>
+    </svg>
+    <div class="hearts" id="hearts" aria-hidden="true"></div>
+    <div class="result" id="result" hidden>
+      <p class="result-kicker">Das letzte Blatt sagt</p>
+      <p class="result-verdict" id="resultVerdict"></p>
+      <p class="result-note" id="resultNote"></p>
+      <button type="button" id="againBtn" class="btn primary">Nächste Blume</button>
+    </div>
+  </main>
+
+  <nav class="picker" aria-label="Blume wählen">
+    <div class="chips" id="chips"></div>
+    <button type="button" id="newBtn" class="btn">Neue Blume</button>
+  </nav>
+</div>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs id="gradients"></defs></svg>
+
+<script>
+(() => {
+  const NS = 'http://www.w3.org/2000/svg';
+  const $ = (id) => document.getElementById(id);
+  const f = (n) => Math.round(n * 10) / 10;
+  const rand = (a, b) => a + Math.random() * (b - a);
+  const randInt = (a, b) => Math.floor(rand(a, b + 1));
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function el(tag, attrs, parent) {
+    const e = document.createElementNS(NS, tag);
+    for (const k in attrs) e.setAttribute(k, attrs[k]);
+    if (parent) parent.appendChild(e);
+    return e;
+  }
+  const store = {
+    get(k) { try { return localStorage.getItem('bluetenzupfer.' + k); } catch (e) { return null; } },
+    set(k, v) { try { localStorage.setItem('bluetenzupfer.' + k, v); } catch (e) {} },
+  };
+
+  // ---------- Petal shapes: base at (0,0), tip at (0,-L) ----------
+  const SHAPES = {
+    daisy: (L, W) => `M0 0C${f(W * .6)} ${f(-L * .1)} ${f(W * .62)} ${f(-L * .97)} 0 ${f(-L)}C${f(-W * .62)} ${f(-L * .97)} ${f(-W * .6)} ${f(-L * .1)} 0 0Z`,
+    pointed: (L, W) => `M0 0C${f(W * .7)} ${f(-L * .18)} ${f(W * .45)} ${f(-L * .72)} 0 ${f(-L)}C${f(-W * .45)} ${f(-L * .72)} ${f(-W * .7)} ${f(-L * .18)} 0 0Z`,
+    round: (L, W) => `M0 0C${f(W * .75)} ${f(-L * .08)} ${f(W * .72)} ${f(-L * 1.02)} 0 ${f(-L)}C${f(-W * .72)} ${f(-L * 1.02)} ${f(-W * .75)} ${f(-L * .08)} 0 0Z`,
+    notched: (L, W) => `M0 0C${f(W * .8)} ${f(-L * .2)} ${f(W * .75)} ${f(-L * .95)} ${f(W * .22)} ${f(-L)}C${f(W * .08)} ${f(-L)} ${f(W * .02)} ${f(-L * .92)} 0 ${f(-L * .86)}C${f(-W * .02)} ${f(-L * .92)} ${f(-W * .08)} ${f(-L)} ${f(-W * .22)} ${f(-L)}C${f(-W * .75)} ${f(-L * .95)} ${f(-W * .8)} ${f(-L * .2)} 0 0Z`,
+    fringed: (L, W) => {
+      const pts = [[0, 0], [.22, -.5], [.5, -.86], [.37, -.84], [.3, -1], [.17, -.86], [.07, -.99], [-.05, -.86], [-.16, -.99], [-.27, -.85], [-.37, -.97], [-.44, -.84], [-.5, -.88], [-.22, -.5]];
+      return 'M' + pts.map(([x, y]) => `${f(x * W)} ${f(y * L)}`).join('L') + 'Z';
+    },
+  };
+
+  // ---------- Flower centres ----------
+  function golden(g, n, radius, dot, colors) {
+    for (let i = 1; i <= n; i++) {
+      const r = radius * Math.sqrt(i / n), a = i * 2.39996;
+      el('circle', { cx: f(r * Math.cos(a)), cy: f(r * Math.sin(a)), r: dot, fill: colors[i % colors.length] }, g);
+    }
+  }
+  const CENTERS = {
+    daisy(g) {
+      el('circle', { r: 24, fill: '#e7a51c', stroke: '#c9860e', 'stroke-width': 2 }, g);
+      golden(g, 90, 21, 1.7, ['#f9d34d', '#f1bb2a']);
+    },
+    sun(g) {
+      el('circle', { r: 54, fill: '#4a2c10', stroke: '#6b4119', 'stroke-width': 3 }, g);
+      golden(g, 340, 50, 1.55, ['#2a1606', '#6b4119', '#3b220b']);
+    },
+    poppy(g) {
+      for (let i = 0; i < 40; i++) {
+        const a = i / 40 * Math.PI * 2 + (i % 2) * .05, r = 26 + (i % 3) * 4;
+        el('line', { x1: f(19 * Math.cos(a)), y1: f(19 * Math.sin(a)), x2: f(r * Math.cos(a)), y2: f(r * Math.sin(a)), stroke: '#1d1a20', 'stroke-width': 1 }, g);
+        el('circle', { cx: f(r * Math.cos(a)), cy: f(r * Math.sin(a)), r: 2.4, fill: '#16131a' }, g);
+      }
+      el('circle', { r: 19, fill: '#7b9669', stroke: '#48603c', 'stroke-width': 2 }, g);
+      for (let i = 0; i < 9; i++) {
+        const a = i / 9 * Math.PI * 2;
+        el('line', { x1: 0, y1: 0, x2: f(16 * Math.cos(a)), y2: f(16 * Math.sin(a)), stroke: '#2f3d2a', 'stroke-width': 1.8, 'stroke-linecap': 'round' }, g);
+      }
+    },
+    cherry(g) {
+      for (let i = 0; i < 20; i++) {
+        const a = i / 20 * Math.PI * 2, r = 22 + (i * 7 % 9);
+        el('line', { x1: f(5 * Math.cos(a)), y1: f(5 * Math.sin(a)), x2: f(r * Math.cos(a)), y2: f(r * Math.sin(a)), stroke: '#e27f9d', 'stroke-width': 1.2 }, g);
+        el('circle', { cx: f(r * Math.cos(a)), cy: f(r * Math.sin(a)), r: 2.6, fill: '#d6a042' }, g);
+      }
+      el('circle', { r: 7, fill: '#c9577a' }, g);
+    },
+    corn(g) {
+      el('circle', { r: 20, fill: '#2b2360' }, g);
+      golden(g, 30, 17, 2, ['#7a64d8', '#5646ad']);
+    },
+    rose(g) {
+      el('circle', { r: 17, fill: '#8e1c3c' }, g);
+      let d = '';
+      for (let t = 0; t <= Math.PI * 5; t += .25) {
+        const r = 1.5 + t * 0.95;
+        d += (d ? 'L' : 'M') + f(r * Math.cos(t)) + ' ' + f(r * Math.sin(t));
+      }
+      el('path', { d, fill: 'none', stroke: '#5c0e27', 'stroke-width': 1.8, 'stroke-linecap': 'round' }, g);
+    },
+  };
+
+  // ---------- Flowers ----------
+  const FLOWERS = [
+    { id: 'daisy', name: 'Gänseblümchen', center: 'daisy',
+      layers: [{ count: [21, 34], L: 92, W: 22, r0: 16, shape: 'daisy', grad: ['#efe8dc', '#ffffff', '#f3b9c8'], stroke: '#e3d8c8' }] },
+    { id: 'sun', name: 'Sonnenblume', center: 'sun',
+      layers: [
+        { count: [16, 21], L: 88, W: 44, r0: 44, shape: 'pointed', grad: ['#c97c0c', '#eba31a', '#f5c23f'], stroke: '#b86f0a' },
+        { count: 'same', offset: .5, L: 80, W: 40, r0: 44, shape: 'pointed', grad: ['#d98c12', '#f4b82a', '#fbd35a'], stroke: '#c47d0e' },
+      ] },
+    { id: 'poppy', name: 'Mohn', center: 'poppy',
+      layers: [{ count: [4, 6], L: 108, W: 110, r0: 0, shape: 'round', grad: ['#1f0a0c', '#cf2a22', '#ee4b37'], stops: [0, .2, 1], stroke: '#a81d18' }] },
+    { id: 'cherry', name: 'Kirschblüte', center: 'cherry',
+      layers: [{ count: [5, 6], L: 86, W: 80, r0: 4, shape: 'notched', grad: ['#f19ab6', '#fbd0dd', '#fff2f6'], stroke: '#eeb3c6' }] },
+    { id: 'corn', name: 'Kornblume', center: 'corn',
+      layers: [{ count: [8, 12], L: 96, W: 58, r0: 16, shape: 'fringed', grad: ['#27479e', '#4674d6', '#8aabf4'], stroke: '#2d4fa6' }] },
+    { id: 'rose', name: 'Rose', center: 'rose',
+      layers: [
+        { count: [5, 6], L: 100, W: 92, r0: 4, shape: 'round', grad: ['#8a1535', '#c8305a', '#e45a80'], stroke: '#9c1d40' },
+        { count: [5, 6], offset: .5, L: 78, W: 74, r0: 3, shape: 'round', grad: ['#7d1230', '#b82850', '#d94872'], stroke: '#8e1a3b' },
+        { count: [4, 5], L: 54, W: 54, r0: 2, shape: 'round', grad: ['#6e0f2a', '#a52047', '#c93a63'], stroke: '#7d1433' },
+      ] },
+  ];
+
+  // ---------- Oracle phrases ----------
+  const PHRASES = {
+    er: { label: 'Er liebt mich … nicht', lines: [['Er liebt mich', 1], ['Er liebt mich nicht', 0]] },
+    sie: { label: 'Sie liebt mich … nicht', lines: [['Sie liebt mich', 1], ['Sie liebt mich nicht', 0]] },
+    klassisch: { label: 'Von Herzen, mit Schmerzen …', lines: [['Er liebt mich', 1], ['von Herzen', 1], ['mit Schmerzen', .5], ['ein wenig', .5], ['gar nicht', 0]] },
+    jn: { label: 'Ja / Nein', lines: [['Ja', 1], ['Nein', 0]] },
+    trau: { label: 'Ich trau mich … nicht', lines: [['Ich trau mich', 1], ['Ich trau mich nicht', 0]] },
+  };
+
+  // ---------- DOM ----------
+  const stage = $('stage'), svg = $('scene');
+  const groundLayer = $('groundLayer'), plantLayer = $('plantLayer'), fallenLayer = $('fallenLayer'), flyingLayer = $('flyingLayer');
+  const oracleLine = $('oracleLine'), oracleMeta = $('oracleMeta');
+  const resultBox = $('result'), resultVerdict = $('resultVerdict'), resultNote = $('resultNote');
+  const phraseSel = $('phraseSet'), chipsBox = $('chips'), heartsBox = $('hearts');
+
+  // gradients
+  const defs = $('gradients');
+  FLOWERS.forEach((def) => def.layers.forEach((ly, li) => {
+    const lg = el('linearGradient', { id: `g-${def.id}-${li}`, x1: 0, y1: 1, x2: 0, y2: 0 }, defs);
+    const stops = ly.stops || [0, .5, 1];
+    ly.grad.forEach((c, i) => el('stop', { offset: stops[i], 'stop-color': c }, lg));
+  }));
+
+  for (const key in PHRASES) {
+    const o = document.createElement('option');
+    o.value = key; o.textContent = PHRASES[key].label;
+    phraseSel.appendChild(o);
+  }
+  if (PHRASES[store.get('phrase')]) phraseSel.value = store.get('phrase');
+
+  // ---------- Building a flower head ----------
+  function buildHead(def, fixed) {
+    const g = el('g', { class: 'head' });
+    const petals = [];
+    let prevCount = 0, start = fixed ? -90 : rand(0, 360);
+    def.layers.forEach((ly, li) => {
+      const n = ly.count === 'same' ? prevCount
+        : fixed ? Math.round((ly.count[0] + ly.count[1]) / 2) : randInt(ly.count[0], ly.count[1]);
+      prevCount = n;
+      const step = 360 / n;
+      const layerStart = start + (ly.offset || 0) * step + (ly.count === 'same' || fixed ? 0 : rand(0, step));
+      const lg = el('g', {}, g);
+      for (let i = 0; i < n; i++) {
+        const a = layerStart + i * step + (fixed ? 0 : rand(-step * .08, step * .08));
+        const L = ly.L * (fixed ? 1 : rand(.93, 1.06));
+        const pg = el('g', { class: 'petal', transform: `rotate(${f(a)}) translate(0 ${-ly.r0})` }, lg);
+        const body = el('g', {}, pg);
+        el('path', { d: SHAPES[ly.shape](L, ly.W), fill: `url(#g-${def.id}-${li})`, stroke: ly.stroke, 'stroke-width': 1.2, 'stroke-linejoin': 'round' }, body);
+        pg._info = { a, r0: ly.r0, L, body };
+        petals.push(pg);
+      }
+    });
+    CENTERS[def.center](el('g', { class: 'center', 'pointer-events': 'none' }, g));
+    return { g, petals };
+  }
+
+  // chips
+  FLOWERS.forEach((def) => {
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'chip'; b.dataset.id = def.id;
+    const mini = el('svg', { viewBox: '-145 -145 290 290', 'aria-hidden': 'true' });
+    mini.appendChild(buildHead(def, true).g);
+    b.appendChild(mini);
+    const s = document.createElement('span'); s.textContent = def.name; b.appendChild(s);
+    b.addEventListener('click', () => newFlower(def));
+    chipsBox.appendChild(b);
+  });
+
+  // ---------- Scene state ----------
+  let W = 0, H = 0, groundY = 0, scale = 1, cx = 0, cy = 0;
+  let head = null, petals = [], plucked = 0, total = 0, currentDef = FLOWERS[0], done = false;
+  let grow = 1, growT = 0;
+  const wob = { a: 0, v: 0 };
+  const flying = [], fallen = [];
+
+  function layout() {
+    const nw = stage.clientWidth, nh = stage.clientHeight;
+    if (!nw || !nh) return;
+    const oldW = W, oldGround = groundY;
+    W = nw; H = nh;
+    svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+    groundY = H - Math.max(54, Math.min(110, H * 0.13));
+    const top = 96;
+    const diameter = Math.max(120, Math.min(W * 0.88, groundY - top - 60, 460));
+    scale = diameter / 290;
+    cx = W / 2;
+    cy = top + diameter / 2;
+
+    // ground
+    groundLayer.textContent = '';
+    ['grass-back', 'grass'].forEach((cls, pass) => {
+      let d = '';
+      for (let x = -8; x < W + 8; x += pass ? 7 : 9) {
+        const h = pass ? rand(8, 20) : rand(14, 30), lean = rand(-6, 6), base = groundY + (pass ? 6 : 0);
+        d += `M${f(x - 4)} ${f(base)}L${f(x + lean)} ${f(base - h)}L${f(x + 4)} ${f(base)}Z`;
+      }
+      el('path', { d, class: cls }, groundLayer);
+      if (pass) el('rect', { x: -10, y: f(groundY + 5), width: W + 20, height: f(H - groundY), class: cls }, groundLayer);
+    });
+
+    // stem + leaves
+    const stemTop = cy, stemBottom = groundY + 12, sh = stemBottom - stemTop;
+    const plantG = plantLayer.querySelector('.plant') || el('g', { class: 'plant' }, plantLayer);
+    plantG.textContent = '';
+    el('path', { d: `M${f(cx)} ${f(stemBottom)}C${f(cx - 14)} ${f(stemBottom - sh * .35)} ${f(cx + 12)} ${f(stemBottom - sh * .7)} ${f(cx)} ${f(stemTop)}`, class: 'stem', 'stroke-width': f(Math.max(4, 8 * scale)) }, plantG);
+    const leafL = Math.max(30, 70 * scale);
+    [[.28, 1], [.5, -1]].forEach(([t, dir]) => {
+      const lx = cx + (dir > 0 ? -3 : 2), ly = stemBottom - sh * t;
+      el('path', { d: `M0 0C${f(leafL * .3)} ${f(-leafL * .38)} ${f(leafL * .8)} ${f(-leafL * .38)} ${f(leafL)} ${f(-leafL * .12)}C${f(leafL * .7)} ${f(leafL * .14)} ${f(leafL * .3)} ${f(leafL * .14)} 0 0Z`, class: 'leaf', transform: `translate(${f(lx)} ${f(ly)}) scale(${dir} 1)` }, plantG);
+    });
+    if (head) plantLayer.appendChild(head);
+
+    // keep fallen petals on the (moved) ground
+    if (oldW) fallen.forEach((p) => { p.x *= W / oldW; p.y += groundY - oldGround; place(p); });
+  }
+
+  function newFlower(def) {
+    currentDef = def || currentDef;
+    store.set('flower', currentDef.id);
+    if (head) head.remove();
+    const built = buildHead(currentDef, false);
+    head = built.g; petals = built.petals;
+    plantLayer.appendChild(head);
+    total = petals.length; plucked = 0; done = false;
+    grow = reduceMotion ? 1 : 0; growT = 0;
+    resultBox.hidden = true;
+    oracleLine.className = 'oracle-line';
+    oracleLine.textContent = 'Zupf ein Blütenblatt';
+    oracleMeta.textContent = `${currentDef.name} · antippen oder abziehen`;
+    chipsBox.querySelectorAll('.chip').forEach((c) => c.setAttribute('aria-pressed', String(c.dataset.id === currentDef.id)));
+  }
+
+  function place(p) {
+    p.g.setAttribute('transform', `translate(${f(p.x)} ${f(p.y)}) rotate(${f(p.r)}) scale(${p.s.toFixed(3)})`);
+  }
+
+  function landYFor(y) {
+    const land = groundY + rand(4, (H - groundY) * 0.75);
+    return y > land ? Math.min(y, H - 6) : land;
+  }
+
+  // ---------- Plucking ----------
+  function pluck(pg, drag) {
+    const i = petals.indexOf(pg);
+    if (i < 0 || done) return null;
+    petals.splice(i, 1);
+    const info = pg._info;
+    const deg = info.a + wob.a, rad = deg * Math.PI / 180;
+    const s = scale * grow, d = info.r0 + info.L / 2;
+    const p = {
+      g: el('g', { class: 'flying-petal' }, flyingLayer),
+      x: cx + s * d * Math.sin(rad), y: cy - s * d * Math.cos(rad),
+      r: deg, s, vx: 0, vy: 0, vr: rand(-140, 140), t: 0,
+      phase: rand(0, 6.28), freq: rand(2.2, 3.6), amp: rand(30, 70), landY: 0, dragging: !!drag,
+    };
+    info.body.setAttribute('transform', `translate(0 ${f(info.L / 2)})`);
+    p.g.appendChild(info.body);
+    pg.remove();
+    if (!drag) {
+      const speed = rand(90, 170);
+      p.vx = Math.sin(rad) * speed; p.vy = -Math.cos(rad) * speed - 90;
+      p.landY = landYFor(p.y);
+    }
+    place(p);
+    flying.push(p);
+    wob.v += (Math.random() < .5 ? -1 : 1) * rand(25, 45);
+    try { if (navigator.vibrate) navigator.vibrate(8); } catch (e) {}
+
+    plucked++;
+    announce(true);
+    if (petals.length === 0) finish();
+    return p;
+  }
+
+  function currentLine() {
+    const lines = PHRASES[phraseSel.value].lines;
+    return lines[(plucked - 1) % lines.length];
+  }
+
+  function announce(animate) {
+    if (!plucked) return;
+    const [text, good] = currentLine();
+    oracleLine.textContent = text;
+    oracleLine.className = 'oracle-line' + (good === 0 ? ' neg' : good === 1 ? ' good' : '');
+    if (animate && !reduceMotion) { void oracleLine.offsetWidth; oracleLine.classList.add('pop'); }
+    oracleMeta.textContent = `${plucked}. Blatt`;
+  }
+
+  function finish() {
+    done = true;
+    setTimeout(() => {
+      if (!done) return;
+      const [text, good] = currentLine();
+      resultVerdict.textContent = text + (good === 1 ? '!' : good === 0 ? '.' : ' …');
+      resultVerdict.className = 'result-verdict' + (good === 0 ? ' neg' : '');
+      resultNote.textContent = good === 1
+        ? `${total} Blätter, und das letzte hat entschieden.`
+        : good === 0
+          ? `Nur ${total} Blätter. Auf der Wiese wachsen noch mehr.`
+          : `${total} Blätter – eindeutig ist anders.`;
+      resultBox.hidden = false;
+      if (good === 1) hearts();
+    }, 650);
+  }
+
+  function hearts() {
+    if (reduceMotion) return;
+    for (let i = 0; i < 18; i++) {
+      const h = document.createElement('span');
+      h.className = 'heart'; h.textContent = '♥';
+      h.style.left = f(cx + rand(-60, 60)) + 'px';
+      h.style.top = f(cy + rand(-20, 40)) + 'px';
+      h.style.fontSize = f(rand(14, 30)) + 'px';
+      h.style.setProperty('--dx', f(rand(-140, 140)) + 'px');
+      h.style.setProperty('--rot', f(rand(-40, 40)) + 'deg');
+      h.style.animationDelay = f(rand(0, .6)) + 's';
+      heartsBox.appendChild(h);
+      setTimeout(() => h.remove(), 3400);
+    }
+  }
+
+  // ---------- Pointer input ----------
+  let pending = null, dragP = null;
+  function toScene(e) {
+    const r = svg.getBoundingClientRect();
+    return { x: (e.clientX - r.left) * W / r.width, y: (e.clientY - r.top) * H / r.height, t: e.timeStamp };
+  }
+  svg.addEventListener('pointerdown', (e) => {
+    const pg = e.target.closest && e.target.closest('.petal');
+    if (!pg || !petals.includes(pg) || pending) return;
+    e.preventDefault();
+    try { svg.setPointerCapture(e.pointerId); } catch (err) {}
+    pending = { pg, id: e.pointerId, start: toScene(e) };
+  });
+  svg.addEventListener('pointermove', (e) => {
+    if (!pending || e.pointerId !== pending.id) return;
+    const pt = toScene(e);
+    if (!dragP) {
+      if (Math.hypot(pt.x - pending.start.x, pt.y - pending.start.y) < 7) return;
+      dragP = pluck(pending.pg, true);
+      if (!dragP) { pending = null; return; }
+      dragP.ox = dragP.x - pt.x; dragP.oy = dragP.y - pt.y;
+      dragP.last = pt;
+      svg.classList.add('dragging');
+    }
+    const dt = Math.max(1, pt.t - dragP.last.t) / 1000;
+    const vx = (pt.x - dragP.last.x) / dt, vy = (pt.y - dragP.last.y) / dt;
+    dragP.vx = dragP.vx * .5 + vx * .5; dragP.vy = dragP.vy * .5 + vy * .5;
+    dragP.x = pt.x + dragP.ox; dragP.y = pt.y + dragP.oy;
+    dragP.r += (pt.x - dragP.last.x) * .4;
+    dragP.last = pt;
+    place(dragP);
+  });
+  function release(e) {
+    if (!pending || e.pointerId !== pending.id) return;
+    if (dragP) {
+      const cap = 1400;
+      dragP.vx = Math.max(-cap, Math.min(cap, dragP.vx));
+      dragP.vy = Math.max(-cap, Math.min(cap, dragP.vy));
+      dragP.dragging = false;
+      dragP.landY = landYFor(dragP.y);
+      svg.classList.remove('dragging');
+    } else if (e.type === 'pointerup') {
+      pluck(pending.pg, false);
+    }
+    pending = null; dragP = null;
+  }
+  svg.addEventListener('pointerup', release);
+  svg.addEventListener('pointercancel', release);
+  svg.addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    e.preventDefault();
+    if (done) { newFlower(); return; }
+    if (petals.length) pluck(petals[Math.floor(Math.random() * petals.length)], false);
+  });
+
+  phraseSel.addEventListener('change', () => {
+    store.set('phrase', phraseSel.value);
+    announce(false);
+    if (done && !resultBox.hidden) { resultBox.hidden = true; finish(); }
+  });
+  $('newBtn').addEventListener('click', () => newFlower());
+  $('againBtn').addEventListener('click', () => newFlower());
+
+  // ---------- Animation loop ----------
+  const G = 600, AIR = 2.4;
+  const easeOutBack = (t) => 1 + 2.70158 * Math.pow(t - 1, 3) + 1.70158 * Math.pow(t - 1, 2);
+  let last = performance.now(), clock = 0;
+  function frame(now) {
+    const dt = Math.min(0.05, (now - last) / 1000);
+    last = now; clock += dt;
+
+    if (grow < 1) { growT += dt; grow = growT >= .7 ? 1 : easeOutBack(growT / .7); }
+    const breeze = reduceMotion ? 0 : Math.sin(clock * .9) * 1.4;
+    wob.v += (-(wob.a - breeze) * 60 - wob.v * 5) * dt;
+    wob.a += wob.v * dt;
+    if (head) head.setAttribute('transform', `translate(${f(cx)} ${f(cy)}) rotate(${f(wob.a)}) scale(${Math.max(0.001, scale * grow).toFixed(3)})`);
+
+    for (let i = flying.length - 1; i >= 0; i--) {
+      const p = flying[i];
+      if (p.dragging) continue;
+      p.t += dt;
+      p.vy += G * dt;
+      p.vx -= p.vx * AIR * dt; p.vy -= p.vy * AIR * dt;
+      const wave = Math.sin(p.t * p.freq + p.phase);
+      const sway = reduceMotion ? 0 : wave * p.amp * Math.min(1, p.t * 1.5);
+      p.x += (p.vx + sway) * dt;
+      p.y += p.vy * dt;
+      p.r += (p.vr + (reduceMotion ? 0 : Math.cos(p.t * p.freq + p.phase) * 70)) * dt;
+      p.vr -= p.vr * 1.2 * dt;
+      if (p.y >= p.landY && p.vy > 0) {
+        p.y = p.landY;
+        p.s *= 0.85;
+        flying.splice(i, 1);
+        fallenLayer.appendChild(p.g);
+        fallen.push(p);
+        if (fallen.length > 160) fallen.shift().g.remove();
+      }
+      place(p);
+    }
+    requestAnimationFrame(frame);
+  }
+
+  // ---------- Start ----------
+  window.addEventListener('resize', layout);
+  if (window.ResizeObserver) new ResizeObserver(layout).observe(stage);
+  layout();
+  newFlower(FLOWERS.find((d) => d.id === store.get('flower')) || FLOWERS[0]);
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
